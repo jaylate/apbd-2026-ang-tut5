@@ -7,7 +7,9 @@ namespace LegacyRenewalApp
 
         public ICustomerRepository CustomerRepository { get; set; } = new CustomerRepository();
         public ISubscriptionPlanRepository PlanRepository { get; set; } = new SubscriptionPlanRepository();
-	public IBillingGateway BillingGateway { get; set; } = new BillingGatewayAdapter();
+        public IBillingGateway BillingGateway { get; set; } = new BillingGatewayAdapter();
+
+        public IRenewalValidator RenewalValidator { get; set; } = new RenewalValidator();
 
         public RenewalInvoice CreateRenewalInvoice(
             int customerId,
@@ -17,21 +19,7 @@ namespace LegacyRenewalApp
             bool includePremiumSupport,
             bool useLoyaltyPoints)
         {
-            if (customerId <= 0)
-            {
-                throw new ArgumentException("Customer id must be positive");
-            }
-
-            if (string.IsNullOrWhiteSpace(planCode))
-            {
-                throw new ArgumentException("Plan code is required");
-            }
-
-            if (seatCount <= 0)
-            {
-                throw new ArgumentException("Seat count must be positive");
-            }
-
+            RenewalValidator.Validate(customerId, planCode, seatCount, paymentMethod);
             if (string.IsNullOrWhiteSpace(paymentMethod))
             {
                 throw new ArgumentException("Payment method is required");

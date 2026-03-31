@@ -1,7 +1,7 @@
 namespace LegacyRenewalApp
 {
-	public interface ICustomerRepository
-	{
-		public Customer GetById(int customerId);
-	}
+    public interface ICustomerRepository
+    {
+        public Customer GetById(int customerId);
+    }
 }
