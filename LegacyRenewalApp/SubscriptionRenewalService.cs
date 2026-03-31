@@ -182,12 +182,12 @@ namespace LegacyRenewalApp
                 PlanCode = normalizedPlanCode,
                 PaymentMethod = normalizedPaymentMethod,
                 SeatCount = seatCount,
-                BaseAmount = Math.Round(baseAmount, 2, MidpointRounding.AwayFromZero),
-                DiscountAmount = Math.Round(discountAmount, 2, MidpointRounding.AwayFromZero),
-                SupportFee = Math.Round(supportFee, 2, MidpointRounding.AwayFromZero),
-                PaymentFee = Math.Round(paymentFee, 2, MidpointRounding.AwayFromZero),
-                TaxAmount = Math.Round(taxAmount, 2, MidpointRounding.AwayFromZero),
-                FinalAmount = Math.Round(finalAmount, 2, MidpointRounding.AwayFromZero),
+                BaseAmount = baseAmount,
+                DiscountAmount = discountAmount,
+                SupportFee = supportFee,
+                PaymentFee = paymentFee,
+                TaxAmount = taxAmount,
+                FinalAmount = finalAmount,
                 Notes = notes.Trim(),
                 GeneratedAt = DateTime.UtcNow
             };
