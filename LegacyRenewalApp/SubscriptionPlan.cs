@@ -1,3 +1,5 @@
+using System;
+
 namespace LegacyRenewalApp
 {
     public class SubscriptionPlan
@@ -7,5 +9,16 @@ namespace LegacyRenewalApp
         public decimal MonthlyPricePerSeat { get; set; }
         public decimal SetupFee { get; set; }
         public bool IsEducationEligible { get; set; }
+
+        public decimal GetSupportFee()
+        {
+            return Code switch
+            {
+                "START" => 250m,
+                "PRO" => 400m,
+                "ENTERPRISE" => 700m,
+                _ => throw new ArgumentException("Unsupported plan code"),
+            };
+        }
     }
 }

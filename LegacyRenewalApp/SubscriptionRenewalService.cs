@@ -118,18 +118,7 @@ namespace LegacyRenewalApp
             decimal supportFee = 0m;
             if (includePremiumSupport)
             {
-                switch (normalizedPlanCode)
-                {
-                    case "START":
-                        supportFee = 250m;
-                        break;
-                    case "PRO":
-                        supportFee = 400m;
-                        break;
-                    case "ENTERPRISE":
-                        supportFee = 700m;
-                        break;
-                }
+                supportFee = plan.GetSupportFee();
 
                 notes += "premium support included; ";
             }
