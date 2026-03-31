@@ -165,11 +165,9 @@ namespace LegacyRenewalApp
                 notes += "minimum invoice amount applied; ";
             }
 
-            var invoice = new RenewalInvoice
+            var invoice = new RenewalInvoice(customerId, normalizedPlanCode, DateTime.UtcNow)
             {
-                InvoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMdd}-{customerId}-{normalizedPlanCode}",
                 CustomerName = customer.FullName,
-                PlanCode = normalizedPlanCode,
                 PaymentMethod = normalizedPaymentMethod,
                 SeatCount = seatCount,
                 BaseAmount = baseAmount,
@@ -179,7 +177,6 @@ namespace LegacyRenewalApp
                 TaxAmount = taxAmount,
                 FinalAmount = finalAmount,
                 Notes = notes.Trim(),
-                GeneratedAt = DateTime.UtcNow
             };
 
             LegacyBillingGateway.SaveInvoice(invoice);

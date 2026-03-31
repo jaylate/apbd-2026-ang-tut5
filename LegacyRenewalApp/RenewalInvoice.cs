@@ -4,9 +4,20 @@ namespace LegacyRenewalApp
 {
     public class RenewalInvoice
     {
-        public string InvoiceNumber { get; set; } = string.Empty;
+        public int CustomerId { get; init; }
+        public string PlanCode { get; init; }
+        public DateTime GeneratedAt { get; init; }
+        public string InvoiceNumber { get; init; }
+
+        public RenewalInvoice(int customerId, string planCode, DateTime generatedAt)
+        {
+            CustomerId = customerId;
+            PlanCode = planCode;
+            GeneratedAt = generatedAt;
+            InvoiceNumber = $"INV-{generatedAt:yyyyMMdd}-{customerId}-{planCode}";
+        }
+
         public string CustomerName { get; set; } = string.Empty;
-        public string PlanCode { get; set; } = string.Empty;
         public string PaymentMethod { get; set; } = string.Empty;
         public int SeatCount { get; set; }
 
@@ -47,7 +58,6 @@ namespace LegacyRenewalApp
             set { _FinalAmount = round(value); }
         }
         public string Notes { get; set; } = string.Empty;
-        public DateTime GeneratedAt { get; set; }
 
         public override string ToString()
         {
