@@ -50,25 +50,27 @@ namespace LegacyRenewalApp
             decimal discountAmount = 0m;
             string notes = string.Empty;
 
-            if (customer.Segment == "Silver")
+            switch (customer.Segment)
             {
-                discountAmount += baseAmount * 0.05m;
-                notes += "silver discount; ";
-            }
-            else if (customer.Segment == "Gold")
-            {
-                discountAmount += baseAmount * 0.10m;
-                notes += "gold discount; ";
-            }
-            else if (customer.Segment == "Platinum")
-            {
-                discountAmount += baseAmount * 0.15m;
-                notes += "platinum discount; ";
-            }
-            else if (customer.Segment == "Education" && plan.IsEducationEligible)
-            {
-                discountAmount += baseAmount * 0.20m;
-                notes += "education discount; ";
+                case "Silver":
+                    discountAmount += baseAmount * 0.05m;
+                    notes += "silver discount; ";
+                    break;
+                case "Gold":
+                    discountAmount += baseAmount * 0.10m;
+                    notes += "gold discount; ";
+                    break;
+                case "Platinum":
+                    discountAmount += baseAmount * 0.15m;
+                    notes += "platinum discount; ";
+                    break;
+                case "Education":
+                    if (plan.IsEducationEligible)
+                    {
+                        discountAmount += baseAmount * 0.20m;
+                        notes += "education discount; ";
+                    }
+                    break;
             }
 
             if (customer.YearsWithCompany >= 5)
@@ -115,65 +117,53 @@ namespace LegacyRenewalApp
             decimal supportFee = 0m;
             if (includePremiumSupport)
             {
-                if (normalizedPlanCode == "START")
+                switch (normalizedPlanCode)
                 {
-                    supportFee = 250m;
-                }
-                else if (normalizedPlanCode == "PRO")
-                {
-                    supportFee = 400m;
-                }
-                else if (normalizedPlanCode == "ENTERPRISE")
-                {
-                    supportFee = 700m;
+                    case "START":
+                        supportFee = 250m;
+                        break;
+                    case "PRO":
+                        supportFee = 400m;
+                        break;
+                    case "ENTERPRISE":
+                        supportFee = 700m;
+                        break;
                 }
 
                 notes += "premium support included; ";
             }
 
             decimal paymentFee = 0m;
-            if (normalizedPaymentMethod == "CARD")
+            switch (normalizedPaymentMethod)
             {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.02m;
-                notes += "card payment fee; ";
-            }
-            else if (normalizedPaymentMethod == "BANK_TRANSFER")
-            {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.01m;
-                notes += "bank transfer fee; ";
-            }
-            else if (normalizedPaymentMethod == "PAYPAL")
-            {
-                paymentFee = (subtotalAfterDiscount + supportFee) * 0.035m;
-                notes += "paypal fee; ";
-            }
-            else if (normalizedPaymentMethod == "INVOICE")
-            {
-                paymentFee = 0m;
-                notes += "invoice payment; ";
-            }
-            else
-            {
-                throw new ArgumentException("Unsupported payment method");
+                case "CARD":
+                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.02m;
+                    notes += "card payment fee; ";
+                    break;
+                case "BANK_TRANSFER":
+                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.01m;
+                    notes += "bank transfer fee; ";
+                    break;
+                case "PAYPAL":
+                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.035m;
+                    notes += "paypal fee; ";
+                    break;
+                case "INVOICE":
+                    paymentFee = 0m;
+                    notes += "invoice payment; ";
+                    break;
+                default:
+                    throw new ArgumentException("Unsupported payment method");
             }
 
-            decimal taxRate = 0.20m;
-            if (customer.Country == "Poland")
+            decimal taxRate = customer.Country switch
             {
-                taxRate = 0.23m;
-            }
-            else if (customer.Country == "Germany")
-            {
-                taxRate = 0.19m;
-            }
-            else if (customer.Country == "Czech Republic")
-            {
-                taxRate = 0.21m;
-            }
-            else if (customer.Country == "Norway")
-            {
-                taxRate = 0.25m;
-            }
+                "Poland" => 0.23m,
+                "Germany" => 0.19m,
+                "Czech Republic" => 0.21m,
+                "Norway" => 0.25m,
+                _ => 0.20m,
+            };
 
             decimal taxBase = subtotalAfterDiscount + supportFee + paymentFee;
             decimal taxAmount = taxBase * taxRate;
