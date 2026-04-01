@@ -10,6 +10,7 @@ namespace LegacyRenewalApp
         public IBillingGateway BillingGateway { get; set; } = new BillingGatewayAdapter();
 
         public IRenewalValidator RenewalValidator { get; set; } = new RenewalValidator();
+        public IDiscountCalculator DiscountCalculator { get; set; } = new DiscountCalculator();
 
         public RenewalInvoice CreateRenewalInvoice(
             int customerId,
@@ -20,10 +21,6 @@ namespace LegacyRenewalApp
             bool useLoyaltyPoints)
         {
             RenewalValidator.Validate(customerId, planCode, seatCount, paymentMethod);
-            if (string.IsNullOrWhiteSpace(paymentMethod))
-            {
-                throw new ArgumentException("Payment method is required");
-            }
 
             string normalizedPlanCode = planCode.Trim().ToUpperInvariant();
             string normalizedPaymentMethod = paymentMethod.Trim().ToUpperInvariant();
@@ -40,55 +37,27 @@ namespace LegacyRenewalApp
             decimal discountAmount = 0m;
             string notes = string.Empty;
 
-            switch (customer.Segment)
-            {
-                case "Silver":
-                    discountAmount += baseAmount * 0.05m;
-                    notes += "silver discount; ";
-                    break;
-                case "Gold":
-                    discountAmount += baseAmount * 0.10m;
-                    notes += "gold discount; ";
-                    break;
-                case "Platinum":
-                    discountAmount += baseAmount * 0.15m;
-                    notes += "platinum discount; ";
-                    break;
-                case "Education":
-                    if (plan.IsEducationEligible)
-                    {
-                        discountAmount += baseAmount * 0.20m;
-                        notes += "education discount; ";
-                    }
-                    break;
-            }
+            var segmentDiscount = DiscountCalculator.GetDiscountAmountForCustomerSegment(
+                customer.Segment,
+                baseAmount,
+                plan.IsEducationEligible
+            );
+            discountAmount += segmentDiscount.Amount;
+            notes += segmentDiscount.Description;
 
-            if (customer.YearsWithCompany >= 5)
-            {
-                discountAmount += baseAmount * 0.07m;
-                notes += "long-term loyalty discount; ";
-            }
-            else if (customer.YearsWithCompany >= 2)
-            {
-                discountAmount += baseAmount * 0.03m;
-                notes += "basic loyalty discount; ";
-            }
+            var yearsDiscount = DiscountCalculator.GetDiscountAmountForLoyalty(
+            customer.YearsWithCompany,
+            baseAmount
+            );
+            discountAmount += yearsDiscount.Amount;
+            notes += yearsDiscount.Description;
 
-            if (seatCount >= 50)
-            {
-                discountAmount += baseAmount * 0.12m;
-                notes += "large team discount; ";
-            }
-            else if (seatCount >= 20)
-            {
-                discountAmount += baseAmount * 0.08m;
-                notes += "medium team discount; ";
-            }
-            else if (seatCount >= 10)
-            {
-                discountAmount += baseAmount * 0.04m;
-                notes += "small team discount; ";
-            }
+            var seatDiscount = DiscountCalculator.GetDiscountAmountForSeatCount(
+            seatCount,
+            baseAmount
+            );
+            discountAmount += seatDiscount.Amount;
+            notes += seatDiscount.Description;
 
             if (useLoyaltyPoints && customer.LoyaltyPoints > 0)
             {

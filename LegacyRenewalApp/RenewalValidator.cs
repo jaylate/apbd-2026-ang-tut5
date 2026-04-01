@@ -20,6 +20,11 @@ namespace LegacyRenewalApp
             {
                 throw new ArgumentException("Seat count must be positive");
             }
+
+            if (string.IsNullOrWhiteSpace(paymentMethod))
+            {
+                throw new ArgumentException("Payment method is required");
+            }
         }
     }
 }
