@@ -12,6 +12,7 @@ namespace LegacyRenewalApp
         public IRenewalValidator RenewalValidator { get; set; } = new RenewalValidator();
         public IDiscountCalculator DiscountCalculator { get; set; } = new DiscountCalculator();
         public IPaymentFeeCalculator PaymentFeeCalculator { get; set; } = new PaymentFeeCalculator();
+        public ITaxCalculator TaxCalculator { get; set; } = new TaxCalculator();
 
         public RenewalInvoice CreateRenewalInvoice(
             int customerId,
@@ -86,17 +87,8 @@ namespace LegacyRenewalApp
             decimal paymentFee = paymentFeeResult.Amount;
             notes += paymentFeeResult.Description;
 
-            decimal taxRate = customer.Country switch
-            {
-                "Poland" => 0.23m,
-                "Germany" => 0.19m,
-                "Czech Republic" => 0.21m,
-                "Norway" => 0.25m,
-                _ => 0.20m,
-            };
-
             decimal taxBase = subtotalAfterDiscount + supportFee + paymentFee;
-            decimal taxAmount = taxBase * taxRate;
+            decimal taxAmount = TaxCalculator.GetTaxAmount(customer.Country, taxBase);
             decimal finalAmount = taxBase + taxAmount;
 
             if (finalAmount < 500m)
