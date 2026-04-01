@@ -11,6 +11,7 @@ namespace LegacyRenewalApp
 
         public IRenewalValidator RenewalValidator { get; set; } = new RenewalValidator();
         public IDiscountCalculator DiscountCalculator { get; set; } = new DiscountCalculator();
+        public IPaymentFeeCalculator PaymentFeeCalculator { get; set; } = new PaymentFeeCalculator();
 
         public RenewalInvoice CreateRenewalInvoice(
             int customerId,
@@ -81,28 +82,9 @@ namespace LegacyRenewalApp
                 notes += "premium support included; ";
             }
 
-            decimal paymentFee = 0m;
-            switch (normalizedPaymentMethod)
-            {
-                case "CARD":
-                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.02m;
-                    notes += "card payment fee; ";
-                    break;
-                case "BANK_TRANSFER":
-                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.01m;
-                    notes += "bank transfer fee; ";
-                    break;
-                case "PAYPAL":
-                    paymentFee = (subtotalAfterDiscount + supportFee) * 0.035m;
-                    notes += "paypal fee; ";
-                    break;
-                case "INVOICE":
-                    paymentFee = 0m;
-                    notes += "invoice payment; ";
-                    break;
-                default:
-                    throw new ArgumentException("Unsupported payment method");
-            }
+            var paymentFeeResult = PaymentFeeCalculator.GetPaymentFee(normalizedPaymentMethod, subtotalAfterDiscount + supportFee);
+            decimal paymentFee = paymentFeeResult.Amount;
+            notes += paymentFeeResult.Description;
 
             decimal taxRate = customer.Country switch
             {
