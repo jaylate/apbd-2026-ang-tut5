@@ -4,15 +4,41 @@ namespace LegacyRenewalApp
 {
     public class SubscriptionRenewalService
     {
+        private readonly ICustomerRepository _customerRepository;
+        private readonly ISubscriptionPlanRepository _planRepository;
+        private readonly IBillingGateway _billingGateway;
+        private readonly IRenewalValidator _renewalValidator;
+        private readonly IDiscountCalculator _discountCalculator;
+        private readonly IPaymentFeeCalculator _paymentFeeCalculator;
+        private readonly ITaxCalculator _taxCalculator;
 
-        public ICustomerRepository CustomerRepository { get; set; } = new CustomerRepository();
-        public ISubscriptionPlanRepository PlanRepository { get; set; } = new SubscriptionPlanRepository();
-        public IBillingGateway BillingGateway { get; set; } = new BillingGatewayAdapter();
+        public SubscriptionRenewalService() : this(
+            new CustomerRepository(),
+            new SubscriptionPlanRepository(),
+            new BillingGatewayAdapter(),
+            new RenewalValidator(),
+            new DiscountCalculator(),
+            new PaymentFeeCalculator(),
+            new TaxCalculator())
+        { }
 
-        public IRenewalValidator RenewalValidator { get; set; } = new RenewalValidator();
-        public IDiscountCalculator DiscountCalculator { get; set; } = new DiscountCalculator();
-        public IPaymentFeeCalculator PaymentFeeCalculator { get; set; } = new PaymentFeeCalculator();
-        public ITaxCalculator TaxCalculator { get; set; } = new TaxCalculator();
+        public SubscriptionRenewalService(
+            ICustomerRepository customerRepository,
+            ISubscriptionPlanRepository planRepository,
+            IBillingGateway billingGateway,
+            IRenewalValidator renewalValidator,
+            IDiscountCalculator discountCalculator,
+            IPaymentFeeCalculator paymentFeeCalculator,
+            ITaxCalculator taxCalculator)
+        {
+            _customerRepository = customerRepository;
+            _planRepository = planRepository;
+            _billingGateway = billingGateway;
+            _renewalValidator = renewalValidator;
+            _discountCalculator = discountCalculator;
+            _paymentFeeCalculator = paymentFeeCalculator;
+            _taxCalculator = taxCalculator;
+        }
 
         public RenewalInvoice CreateRenewalInvoice(
             int customerId,
@@ -22,13 +48,13 @@ namespace LegacyRenewalApp
             bool includePremiumSupport,
             bool useLoyaltyPoints)
         {
-            RenewalValidator.Validate(customerId, planCode, seatCount, paymentMethod);
+            _renewalValidator.Validate(customerId, planCode, seatCount, paymentMethod);
 
             string normalizedPlanCode = planCode.Trim().ToUpperInvariant();
             string normalizedPaymentMethod = paymentMethod.Trim().ToUpperInvariant();
 
-            var customer = CustomerRepository.GetById(customerId);
-            var plan = PlanRepository.GetByCode(normalizedPlanCode);
+            var customer = _customerRepository.GetById(customerId);
+            var plan = _planRepository.GetByCode(normalizedPlanCode);
 
             if (!customer.IsActive)
             {
@@ -39,7 +65,7 @@ namespace LegacyRenewalApp
             decimal discountAmount = 0m;
             string notes = string.Empty;
 
-            var segmentDiscount = DiscountCalculator.GetDiscountAmountForCustomerSegment(
+            var segmentDiscount = _discountCalculator.GetDiscountAmountForCustomerSegment(
                 customer.Segment,
                 baseAmount,
                 plan.IsEducationEligible
@@ -47,16 +73,16 @@ namespace LegacyRenewalApp
             discountAmount += segmentDiscount.Amount;
             notes += segmentDiscount.Description;
 
-            var yearsDiscount = DiscountCalculator.GetDiscountAmountForLoyalty(
-            customer.YearsWithCompany,
-            baseAmount
+            var yearsDiscount = _discountCalculator.GetDiscountAmountForLoyalty(
+                customer.YearsWithCompany,
+                baseAmount
             );
             discountAmount += yearsDiscount.Amount;
             notes += yearsDiscount.Description;
 
-            var seatDiscount = DiscountCalculator.GetDiscountAmountForSeatCount(
-            seatCount,
-            baseAmount
+            var seatDiscount = _discountCalculator.GetDiscountAmountForSeatCount(
+                seatCount,
+                baseAmount
             );
             discountAmount += seatDiscount.Amount;
             notes += seatDiscount.Description;
@@ -83,12 +109,12 @@ namespace LegacyRenewalApp
                 notes += "premium support included; ";
             }
 
-            var paymentFeeResult = PaymentFeeCalculator.GetPaymentFee(normalizedPaymentMethod, subtotalAfterDiscount + supportFee);
+            var paymentFeeResult = _paymentFeeCalculator.GetPaymentFee(normalizedPaymentMethod, subtotalAfterDiscount + supportFee);
             decimal paymentFee = paymentFeeResult.Amount;
             notes += paymentFeeResult.Description;
 
             decimal taxBase = subtotalAfterDiscount + supportFee + paymentFee;
-            decimal taxAmount = TaxCalculator.GetTaxAmount(customer.Country, taxBase);
+            decimal taxAmount = _taxCalculator.GetTaxAmount(customer.Country, taxBase);
             decimal finalAmount = taxBase + taxAmount;
 
             if (finalAmount < 500m)
@@ -111,7 +137,7 @@ namespace LegacyRenewalApp
                 Notes = notes.Trim(),
             };
 
-            BillingGateway.SaveInvoice(invoice);
+            _billingGateway.SaveInvoice(invoice);
 
             if (!string.IsNullOrWhiteSpace(customer.Email))
             {
@@ -120,7 +146,7 @@ namespace LegacyRenewalApp
                     $"Hello {customer.FullName}, your renewal for plan {normalizedPlanCode} " +
                     $"has been prepared. Final amount: {invoice.FinalAmount:F2}.";
 
-                BillingGateway.SendEmail(customer.Email, subject, body);
+                _billingGateway.SendEmail(customer.Email, subject, body);
             }
 
             return invoice;
