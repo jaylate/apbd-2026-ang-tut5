@@ -16,49 +16,49 @@ namespace LegacyRenewalApp
         private const decimal MediumTeamDiscount = 0.08m;
         private const decimal SmallTeamDiscount = 0.04m;
 
-        public DiscountResult GetDiscountAmountForCustomerSegment(string segment, decimal baseAmount, bool isEducationEligible)
+        public CalculationResult GetDiscountAmountForCustomerSegment(string segment, decimal baseAmount, bool isEducationEligible)
         {
             return segment switch
             {
-                "Silver" => new DiscountResult(baseAmount * SilverDiscount, "silver discount; "),
-                "Gold" => new DiscountResult(baseAmount * GoldDiscount, "gold discount; "),
-                "Platinum" => new DiscountResult(baseAmount * PlatinumDiscount, "platinum discount; "),
+                "Silver" => new CalculationResult(baseAmount * SilverDiscount, "silver discount; "),
+                "Gold" => new CalculationResult(baseAmount * GoldDiscount, "gold discount; "),
+                "Platinum" => new CalculationResult(baseAmount * PlatinumDiscount, "platinum discount; "),
                 "Education" => isEducationEligible
-                    ? new DiscountResult(baseAmount * EducationDiscount, "education discount; ")
-                    : new DiscountResult(0, ""),
-                _ => new DiscountResult(0, ""),
+                    ? new CalculationResult(baseAmount * EducationDiscount, "education discount; ")
+                    : new CalculationResult(0, ""),
+                _ => new CalculationResult(0, ""),
             };
 
         }
 
-        public DiscountResult GetDiscountAmountForLoyalty(decimal yearsWithCompany, decimal baseAmount)
+        public CalculationResult GetDiscountAmountForLoyalty(decimal yearsWithCompany, decimal baseAmount)
         {
             if (yearsWithCompany >= 5)
             {
-                return new DiscountResult(baseAmount * LongTermLoyaltyDiscount, "long-term loyalty discount; ");
+                return new CalculationResult(baseAmount * LongTermLoyaltyDiscount, "long-term loyalty discount; ");
             }
             else if (yearsWithCompany >= 2)
             {
-                return new DiscountResult(baseAmount * BasicLoyaltyDiscount, "basic loyalty discount; ");
+                return new CalculationResult(baseAmount * BasicLoyaltyDiscount, "basic loyalty discount; ");
             }
-            return new DiscountResult(0, "");
+            return new CalculationResult(0, "");
         }
 
-        public DiscountResult GetDiscountAmountForSeatCount(int seatCount, decimal baseAmount)
+        public CalculationResult GetDiscountAmountForSeatCount(int seatCount, decimal baseAmount)
         {
             if (seatCount >= 50)
             {
-                return new DiscountResult(baseAmount * LargeTeamDiscount, "large team discount; ");
+                return new CalculationResult(baseAmount * LargeTeamDiscount, "large team discount; ");
             }
             else if (seatCount >= 20)
             {
-                return new DiscountResult(baseAmount * MediumTeamDiscount, "medium team discount; ");
+                return new CalculationResult(baseAmount * MediumTeamDiscount, "medium team discount; ");
             }
             else if (seatCount >= 10)
             {
-                return new DiscountResult(baseAmount * SmallTeamDiscount, "small team discount; ");
+                return new CalculationResult(baseAmount * SmallTeamDiscount, "small team discount; ");
             }
-            return new DiscountResult(0, "");
+            return new CalculationResult(0, "");
         }
     }
 }
