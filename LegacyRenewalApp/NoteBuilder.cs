@@ -10,7 +10,7 @@ namespace LegacyRenewalApp
         {
             if (string.IsNullOrEmpty(s))
             {
-		    return;
+                return;
             }
             _notes += $"{s.Trim()}; ";
         }

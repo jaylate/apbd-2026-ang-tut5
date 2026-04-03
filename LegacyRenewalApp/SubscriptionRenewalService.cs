@@ -11,7 +11,7 @@ namespace LegacyRenewalApp
         private readonly IDiscountCalculator _discountCalculator;
         private readonly IPaymentFeeCalculator _paymentFeeCalculator;
         private readonly ITaxCalculator _taxCalculator;
-        private readonly INoteBuilder _noteBuilder;
+        private readonly INoteBuilderFactory _noteBuilderFactory;
 
         public SubscriptionRenewalService() : this(
             new CustomerRepository(),
@@ -21,7 +21,7 @@ namespace LegacyRenewalApp
             new DiscountCalculator(),
             new PaymentFeeCalculator(),
             new TaxCalculator(),
-        new NoteBuilder())
+        new NoteBuilderFactory())
         { }
 
         public SubscriptionRenewalService(
@@ -32,7 +32,7 @@ namespace LegacyRenewalApp
             IDiscountCalculator discountCalculator,
             IPaymentFeeCalculator paymentFeeCalculator,
             ITaxCalculator taxCalculator,
-        INoteBuilder noteBuilder)
+        INoteBuilderFactory noteBuilderFactory)
         {
             _customerRepository = customerRepository;
             _planRepository = planRepository;
@@ -41,7 +41,7 @@ namespace LegacyRenewalApp
             _discountCalculator = discountCalculator;
             _paymentFeeCalculator = paymentFeeCalculator;
             _taxCalculator = taxCalculator;
-            _noteBuilder = noteBuilder;
+            _noteBuilderFactory = noteBuilderFactory;
         }
 
         public RenewalInvoice CreateRenewalInvoice(
@@ -59,6 +59,7 @@ namespace LegacyRenewalApp
 
             var customer = _customerRepository.GetById(customerId);
             var plan = _planRepository.GetByCode(normalizedPlanCode);
+            var noteBuilder = _noteBuilderFactory.Create();
 
             if (!customer.IsActive)
             {
@@ -74,34 +75,34 @@ namespace LegacyRenewalApp
                 plan.IsEducationEligible
             );
             discountAmount += segmentDiscount.Amount;
-            _noteBuilder.AddNote(segmentDiscount.Description);
+            noteBuilder.AddNote(segmentDiscount.Description);
 
             var yearsDiscount = _discountCalculator.GetDiscountAmountForLoyalty(
                 customer.YearsWithCompany,
                 baseAmount
             );
             discountAmount += yearsDiscount.Amount;
-            _noteBuilder.AddNote(yearsDiscount.Description);
+            noteBuilder.AddNote(yearsDiscount.Description);
 
             var seatDiscount = _discountCalculator.GetDiscountAmountForSeatCount(
                 seatCount,
                 baseAmount
             );
             discountAmount += seatDiscount.Amount;
-            _noteBuilder.AddNote(seatDiscount.Description);
+            noteBuilder.AddNote(seatDiscount.Description);
 
             if (useLoyaltyPoints && customer.LoyaltyPoints > 0)
             {
                 int pointsToUse = customer.LoyaltyPoints > 200 ? 200 : customer.LoyaltyPoints;
                 discountAmount += pointsToUse;
-                _noteBuilder.AddNote($"loyalty points used: {pointsToUse}");
+                noteBuilder.AddNote($"loyalty points used: {pointsToUse}");
             }
 
             decimal subtotalAfterDiscount = baseAmount - discountAmount;
             if (subtotalAfterDiscount < 300m)
             {
                 subtotalAfterDiscount = 300m;
-                _noteBuilder.AddNote("minimum discounted subtotal applied");
+                noteBuilder.AddNote("minimum discounted subtotal applied");
             }
 
             decimal supportFee = 0m;
@@ -109,12 +110,12 @@ namespace LegacyRenewalApp
             {
                 supportFee = plan.GetSupportFee();
 
-                _noteBuilder.AddNote("premium support included");
+                noteBuilder.AddNote("premium support included");
             }
 
             var paymentFeeResult = _paymentFeeCalculator.GetPaymentFee(normalizedPaymentMethod, subtotalAfterDiscount + supportFee);
             decimal paymentFee = paymentFeeResult.Amount;
-            _noteBuilder.AddNote(paymentFeeResult.Description);
+            noteBuilder.AddNote(paymentFeeResult.Description);
 
             decimal taxBase = subtotalAfterDiscount + supportFee + paymentFee;
             decimal taxAmount = _taxCalculator.GetTaxAmount(customer.Country, taxBase);
@@ -123,7 +124,7 @@ namespace LegacyRenewalApp
             if (finalAmount < 500m)
             {
                 finalAmount = 500m;
-                _noteBuilder.AddNote("minimum invoice amount applied");
+                noteBuilder.AddNote("minimum invoice amount applied");
             }
 
             var invoice = new RenewalInvoice(customerId, normalizedPlanCode, DateTime.UtcNow)
@@ -137,7 +138,7 @@ namespace LegacyRenewalApp
                 PaymentFee = paymentFee,
                 TaxAmount = taxAmount,
                 FinalAmount = finalAmount,
-                Notes = _noteBuilder.ToString(),
+                Notes = noteBuilder.ToString(),
             };
 
             _billingGateway.SaveInvoice(invoice);
