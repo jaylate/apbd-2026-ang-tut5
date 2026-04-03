@@ -20,11 +20,11 @@ namespace LegacyRenewalApp
         {
             return segment switch
             {
-                "Silver" => new CalculationResult(baseAmount * SilverDiscount, "silver discount; "),
-                "Gold" => new CalculationResult(baseAmount * GoldDiscount, "gold discount; "),
-                "Platinum" => new CalculationResult(baseAmount * PlatinumDiscount, "platinum discount; "),
+                "Silver" => new CalculationResult(baseAmount * SilverDiscount, "silver discount"),
+                "Gold" => new CalculationResult(baseAmount * GoldDiscount, "gold discount"),
+                "Platinum" => new CalculationResult(baseAmount * PlatinumDiscount, "platinum discount"),
                 "Education" => isEducationEligible
-                    ? new CalculationResult(baseAmount * EducationDiscount, "education discount; ")
+                    ? new CalculationResult(baseAmount * EducationDiscount, "education discount")
                     : new CalculationResult(0, ""),
                 _ => new CalculationResult(0, ""),
             };
@@ -35,11 +35,11 @@ namespace LegacyRenewalApp
         {
             if (yearsWithCompany >= 5)
             {
-                return new CalculationResult(baseAmount * LongTermLoyaltyDiscount, "long-term loyalty discount; ");
+                return new CalculationResult(baseAmount * LongTermLoyaltyDiscount, "long-term loyalty discount");
             }
             else if (yearsWithCompany >= 2)
             {
-                return new CalculationResult(baseAmount * BasicLoyaltyDiscount, "basic loyalty discount; ");
+                return new CalculationResult(baseAmount * BasicLoyaltyDiscount, "basic loyalty discount");
             }
             return new CalculationResult(0, "");
         }
@@ -48,15 +48,15 @@ namespace LegacyRenewalApp
         {
             if (seatCount >= 50)
             {
-                return new CalculationResult(baseAmount * LargeTeamDiscount, "large team discount; ");
+                return new CalculationResult(baseAmount * LargeTeamDiscount, "large team discount");
             }
             else if (seatCount >= 20)
             {
-                return new CalculationResult(baseAmount * MediumTeamDiscount, "medium team discount; ");
+                return new CalculationResult(baseAmount * MediumTeamDiscount, "medium team discount");
             }
             else if (seatCount >= 10)
             {
-                return new CalculationResult(baseAmount * SmallTeamDiscount, "small team discount; ");
+                return new CalculationResult(baseAmount * SmallTeamDiscount, "small team discount");
             }
             return new CalculationResult(0, "");
         }
